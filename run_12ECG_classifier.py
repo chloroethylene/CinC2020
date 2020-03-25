@@ -2,6 +2,7 @@
 
 import os
 import numpy as np
+from scipy import signal
 import net
 from get_12ECG_features import get_12ECG_features
 
@@ -13,6 +14,7 @@ def run_12ECG_classifier(data,header_data,classes,model):
 
     #fix data
     data = data.T
+    data = signal.resample(data, int(data.shape[0]*256/500), axis=0)
     fix_data = np.zeros((1,15360, 12))
     if data.shape[0]>15360:
         data = data[:15360,:]
@@ -33,8 +35,7 @@ def run_12ECG_classifier(data,header_data,classes,model):
     return current_label, current_score
 
 def load_12ECG_model():
-    # load the model from disk 
-    os.environ["CUDA_VISIBLE_DEVICES"] = '3'
+    # load the model from disk
     filename = ['model_fold_'+str(fold+1)+'.h5' for fold in range(4)]
     loaded_model = []
     model = net.Net(9, 15360, 12, None)
