@@ -4,15 +4,18 @@ import numpy as np, os, sys
 from scipy.io import loadmat
 from run_12ECG_classifier import load_12ECG_model, run_12ECG_classifier
 
-
 def load_challenge_data(filename):
+
 
     x = loadmat(filename)
     data = np.asarray(x['val'], dtype=np.float64)
-    input_header_file = filename.replace('.mat','.hea')
+
+    new_file = filename.replace('.mat','.hea')
+    input_header_file = os.path.join(new_file)
 
     with open(input_header_file,'r') as f:
         header_data=f.readlines()
+
 
     return data, header_data
 
@@ -50,20 +53,19 @@ def get_classes(input_directory,files):
     return sorted(classes)
 
 if __name__ == '__main__':
-    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     # Parse arguments.
     if len(sys.argv) != 3:
         raise Exception('Include the input and output directories as arguments, e.g., python driver.py input output.')
 
     input_directory = sys.argv[1]
     output_directory = sys.argv[2]
-    
+
     # Find files.
     input_files = []
     for f in os.listdir(input_directory):
         if os.path.isfile(os.path.join(input_directory, f)) and not f.lower().startswith('.') and f.lower().endswith('mat'):
             input_files.append(f)
-        
+
     if not os.path.isdir(output_directory):
         os.mkdir(output_directory)
 
@@ -71,16 +73,19 @@ if __name__ == '__main__':
 
     # Load model.
     print('Loading 12ECG model...')
-    models,Emodels = load_12ECG_model(model_path='models/')
+    model = load_12ECG_model()
 
-    # Iterate over files.    
+    # Iterate over files.
+    print('Extracting 12ECG features...')
     num_files = len(input_files)
+
     for i, f in enumerate(input_files):
         print('    {}/{}...'.format(i+1, num_files))
         tmp_input_file = os.path.join(input_directory,f)
         data,header_data = load_challenge_data(tmp_input_file)
-        current_label, current_score = run_12ECG_classifier(data,header_data,classes, models, Emodels)
+        current_label, current_score = run_12ECG_classifier(data,header_data,classes, model)
         # Save results.
         save_challenge_predictions(output_directory,f,current_score,current_label,classes)
         
+    #print(current_score, current)
     print('Done.')

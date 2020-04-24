@@ -7,7 +7,7 @@ from keras import backend as K
 from keras.models import load_model
 
 
-def run_12ECG_classifier(data,header_data,classes,models, Emodels):
+def run_12ECG_classifier(data,header_data,classes,M):
 
     num_classes = len(classes)
 
@@ -19,7 +19,9 @@ def run_12ECG_classifier(data,header_data,classes,models, Emodels):
         data = data[:15360,:]
     x[:,:data.shape[0],:]=data
 
-    # Use your classifier here to obtain a label and score for each class.   
+    # Use your classifier here to obtain a label and score for each class.
+    models = M[0]
+    Emodels = M[1]
     '''
     prediction = np.zeros((len(models), num_classes))
     for i in range(len(models)):
@@ -48,7 +50,7 @@ def run_12ECG_classifier(data,header_data,classes,models, Emodels):
     return current_label, current_score
 
 
-def load_12ECG_model(model_path):
+def load_12ECG_model():
     # load the model from disk
     import net
     '''
@@ -59,9 +61,10 @@ def load_12ECG_model(model_path):
         models.append(model)
     '''
     leads_name = ['I','II','III','avR','avL','avF','V1','V2','V3','V4','V5','V6']
+    model_path = 'models/'
     models = []
     Emodels = []
-    
+    M = []
     count = 0
     for fold in range(10):
         if fold!=6:
@@ -79,5 +82,6 @@ def load_12ECG_model(model_path):
         Emodel = net.ensemble_model() 
         Emodel.load_weights(model_path+'10_fold_Emodel_'+str(fold+1)+'.hdf5')
         Emodels.append(Emodel)
-            
-    return models, Emodels
+    M.append(models)
+    M.append(Emodels)
+    return M
